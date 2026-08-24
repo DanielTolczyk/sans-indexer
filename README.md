@@ -156,3 +156,9 @@ Run the full test suite:
 ```bash
 uv run pytest -v
 ```
+
+## Disclaimer
+
+This project is an independent study utility created for educational purposes. It is not affiliated with, sponsored by, endorsed by, or associated with SANS Institute or GIAC Certifications. SANS is a registered trademark of the SANS Institute, and GIAC is a registered trademark of The Escal Institute of Advanced Technologies, Inc. 
+
+This repository contains only software tooling and does not distribute any proprietary course books, questions, or copyrighted curriculum materials.
