@@ -7,6 +7,7 @@ from sans_indexer.cli.repl import run_repl
 from sans_indexer.engine.search import SearchEngine
 from sans_indexer.exporters.html_exporter import export_to_html
 from sans_indexer.exporters.markdown_exporter import export_to_markdown
+from sans_indexer.cli.flashcards import run_flashcards
 from sans_indexer.models import IndexEntry
 from sans_indexer.storage.csv_store import CSVStorage
 
@@ -166,6 +167,27 @@ def merge(source_file: str, file: str | Path) -> None:
     click.echo(
         f"Merge complete: {added} new entry/entries added, {skipped} duplicate(s) skipped."
     )
+
+@cli.command(name="flashcards")
+@click.option("--cat", "-c", default=None, help="Filter flashcards by category.")
+@click.option("--book", "-b", default=None, help="Filter flashcards by book identifier (e.g. B1).")
+@click.option("--limit", "-l", default=None, type=int, help="Maximum number of cards to review.")
+@click.option(
+    "--file",
+    "-f",
+    default=DEFAULT_DATA_PATH,
+    envvar="SANS_INDEX_FILE",
+    type=click.Path(),
+    help="Source CSV file (or set SANS_INDEX_FILE).",
+)
+def flashcards(
+    cat: str | None,
+    book: str | None,
+    limit: int | None,
+    file: str | Path,
+) -> None:
+    """Launch an interactive terminal flashcard session from indexed terms."""
+    run_flashcards(file_path=Path(file), category=cat, book=book, limit=limit)
 
 
 if __name__ == "__main__":
