@@ -61,3 +61,17 @@ def test_cli_export(tmp_path: Path):
     assert export_result.exit_code == 0
     assert Path(out_html).exists()
     assert "BloodHound" in Path(out_html).read_text(encoding="utf-8")
+
+def test_cli_merge(tmp_path: Path):
+    runner = CliRunner()
+    target_csv = str(tmp_path / "target.csv")
+    source_csv = str(tmp_path / "source.csv")
+
+    runner.invoke(cli, ["add", "-t", "SAML", "-b", "B1", "-p", "5", "-f", target_csv])
+    runner.invoke(cli, ["add", "-t", "SAML", "-b", "B1", "-p", "5", "-f", source_csv])
+    runner.invoke(cli, ["add", "-t", "OAuth", "-b", "B1", "-p", "15", "-f", source_csv])
+
+    merge_result = runner.invoke(cli, ["merge", source_csv, "--file", target_csv])
+    assert merge_result.exit_code == 0
+    assert "1 new entry/entries added" in merge_result.output
+    assert "1 duplicate(s) skipped" in merge_result.output

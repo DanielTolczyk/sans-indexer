@@ -149,6 +149,24 @@ def export(export_format: str, out: str | Path, file: str | Path) -> None:
     out_path.write_text(content, encoding="utf-8")
     click.echo(f"Exported {len(entries)} entries to {out_path} ({export_format.upper()})")
 
+@cli.command()
+@click.argument("source_file", type=click.Path(exists=True))
+@click.option(
+    "--file",
+    "-f",
+    default=DEFAULT_DATA_PATH,
+    envvar="SANS_INDEX_FILE",
+    type=click.Path(),
+    help="Target CSV file (or set SANS_INDEX_FILE).",
+)
+def merge(source_file: str, file: str | Path) -> None:
+    """Merge entries from another CSV file into the target index, skipping duplicates."""
+    target_storage = CSVStorage(file)
+    added, skipped = target_storage.merge_from(source_file)
+    click.echo(
+        f"Merge complete: {added} new entry/entries added, {skipped} duplicate(s) skipped."
+    )
+
 
 if __name__ == "__main__":
     cli()

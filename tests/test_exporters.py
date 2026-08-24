@@ -28,11 +28,12 @@ def test_html_export():
     assert "<div class='letter-header'>K</div>" in html_out
     assert "<div class='letter-header'>W</div>" in html_out
 
-    # Check terms and details
+    # Check terms, badges, and details
     assert "Kerberoasting" in html_out
     assert "WPA3 SAE" in html_out
     assert "Dragonfly handshake" in html_out
-    assert "<em>Aliases:</em> SAE" in html_out
+    assert "Aliases: SAE" in html_out
+    assert "class='badge'" in html_out
 
 
 def test_markdown_export():

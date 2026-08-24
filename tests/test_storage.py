@@ -50,3 +50,22 @@ def test_csv_storage_load_nonexistent_file(tmp_path: Path):
 
     loaded = list(storage.load_all())
     assert loaded == []
+
+def test_csv_storage_merge(tmp_path: Path):
+    target_file = tmp_path / "target.csv"
+    source_file = tmp_path / "source.csv"
+
+    target_store = CSVStorage(target_file)
+    target_store.add(IndexEntry(term="Kerberos", book="B1", page=10, category="Auth"))
+
+    source_store = CSVStorage(source_file)
+    source_store.add(IndexEntry(term="Kerberos", book="B1", page=10, category="Auth"))  # Duplicate
+    source_store.add(IndexEntry(term="NTLM", book="B1", page=20, category="Auth"))      # New
+
+    added, skipped = target_store.merge_from(source_file)
+    assert added == 1
+    assert skipped == 1
+
+    all_entries = list(target_store.load_all())
+    assert len(all_entries) == 2
+    assert {e.term for e in all_entries} == {"Kerberos", "NTLM"}

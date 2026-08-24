@@ -47,3 +47,31 @@ class CSVStorage(BaseStorage):
             if not file_exists:
                 writer.writeheader()
             writer.writerow(entry.to_csv_row())
+
+    def merge_from(self, source_path: str | Path) -> tuple[int, int]:
+        """
+        Merges entries from another CSV into this storage.
+        Deduplicates based on (term, book, page).
+        Returns (added_count, skipped_count).
+        """
+        source_storage = CSVStorage(source_path)
+        existing_entries = list(self.load_all())
+        
+        # Deduplication lookup key: (normalized term, normalized book, page)
+        existing_keys = {
+            (e.term.strip().lower(), e.book.strip().lower(), e.page)
+            for e in existing_entries
+        }
+
+        added = 0
+        skipped = 0
+        for entry in source_storage.load_all():
+            key = (entry.term.strip().lower(), entry.book.strip().lower(), entry.page)
+            if key not in existing_keys:
+                self.add(entry)
+                existing_keys.add(key)
+                added += 1
+            else:
+                skipped += 1
+
+        return added, skipped
