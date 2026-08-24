@@ -75,6 +75,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     tr {{
       page-break-inside: avoid;
     }}
+    tr:nth-child(even) {{
+      background-color: #f8fafc;
+    }}
     th {{
       text-align: left;
       border-bottom: 1.5px solid #222;
@@ -85,7 +88,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     }}
     td {{
       padding: 3px 4px;
-      border-bottom: 0.5px solid #e0e0e0;
+      border-bottom: 0.5px solid #e2e8f0;
       vertical-align: middle;
     }}
     .col-term {{ width: 25%; font-weight: 600; color: #111; }}
