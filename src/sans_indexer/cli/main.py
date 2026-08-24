@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import click
 
+from sans_indexer.cli.repl import run_repl
 from sans_indexer.engine.search import SearchEngine
 from sans_indexer.exporters.html_exporter import export_to_html
 from sans_indexer.exporters.markdown_exporter import export_to_markdown
@@ -19,13 +20,34 @@ def cli() -> None:
 
 
 @cli.command()
+@click.option(
+    "--file",
+    "-f",
+    default=DEFAULT_DATA_PATH,
+    envvar="SANS_INDEX_FILE",
+    type=click.Path(),
+    help="Target CSV file (or set SANS_INDEX_FILE).",
+)
+def repl(file: str | Path) -> None:
+    """Launch an interactive study REPL session for rapid entry."""
+    run_repl(Path(file))
+
+
+@cli.command()
 @click.option("--term", "-t", required=True, help="Topic or concept term.")
 @click.option("--book", "-b", required=True, help="Course book identifier (e.g. B1).")
 @click.option("--page", "-p", required=True, type=int, help="Page number.")
 @click.option("--cat", "-c", default="General", help="Category (default: General).")
 @click.option("--notes", "-n", default="", help="Short notes, flags, or syntax reminders.")
 @click.option("--synonyms", "-s", default="", help="Comma-separated synonyms or aliases.")
-@click.option("--file", "-f", default=DEFAULT_DATA_PATH, type=click.Path(), help="Target CSV file.")
+@click.option(
+    "--file",
+    "-f",
+    default=DEFAULT_DATA_PATH,
+    envvar="SANS_INDEX_FILE",
+    type=click.Path(),
+    help="Target CSV file (or set SANS_INDEX_FILE).",
+)
 def add(
     term: str,
     book: str,
@@ -53,7 +75,14 @@ def add(
 
 @cli.command()
 @click.argument("query")
-@click.option("--file", "-f", default=DEFAULT_DATA_PATH, type=click.Path(), help="Source CSV file.")
+@click.option(
+    "--file",
+    "-f",
+    default=DEFAULT_DATA_PATH,
+    envvar="SANS_INDEX_FILE",
+    type=click.Path(),
+    help="Source CSV file (or set SANS_INDEX_FILE).",
+)
 @click.option("--limit", "-l", default=10, type=int, help="Max number of results to display.")
 def search(query: str, file: str | Path, limit: int) -> None:
     """Perform a ranked FTS5 search on indexed entries."""
@@ -92,7 +121,14 @@ def search(query: str, file: str | Path, limit: int) -> None:
     help="Export file format.",
 )
 @click.option("--out", "-o", required=True, type=click.Path(), help="Output file path.")
-@click.option("--file", "-f", default=DEFAULT_DATA_PATH, type=click.Path(), help="Source CSV file.")
+@click.option(
+    "--file",
+    "-f",
+    default=DEFAULT_DATA_PATH,
+    envvar="SANS_INDEX_FILE",
+    type=click.Path(),
+    help="Source CSV file (or set SANS_INDEX_FILE).",
+)
 def export(export_format: str, out: str | Path, file: str | Path) -> None:
     """Export index to print-optimized HTML or Markdown."""
     storage = CSVStorage(file)
