@@ -23,14 +23,14 @@ def test_cli_flashcards_with_entries(tmp_path: Path):
         IndexEntry(
             term="Mimikatz",
             book="B3",
-            page=42,
+            page="42-45",
             category="Credential Access",
             notes="sekurlsa::logonpasswords",
             synonyms=["lsass dump"],
+            is_lab=True,
         )
     )
 
-    # Press Enter to flip, then 'y' for remembered
     result = runner.invoke(
         cli,
         ["flashcards", "--file", csv_file],

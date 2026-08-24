@@ -7,21 +7,19 @@ from typing import Iterable
 
 from sans_indexer.models import IndexEntry
 
-# Muted, print-friendly pastel palette (light background, darker text/border)
 COLOR_PALETTE = [
-    {"bg": "#E8F0FE", "text": "#174EA6", "border": "#AECBFA"},  # Blue
-    {"bg": "#FEF7E0", "text": "#B06000", "border": "#FDD663"},  # Yellow / Amber
-    {"bg": "#E6F4EA", "text": "#137333", "border": "#CEEAD6"},  # Green
-    {"bg": "#FCE8E6", "text": "#C5221F", "border": "#FAD2CF"},  # Red
-    {"bg": "#F3E8FD", "text": "#7627BB", "border": "#D7AEFB"},  # Purple
-    {"bg": "#E0F2F1", "text": "#00695C", "border": "#80CBC4"},  # Teal
-    {"bg": "#FFF0F5", "text": "#880E4F", "border": "#F48FB1"},  # Pink / Magenta
-    {"bg": "#EFEBE9", "text": "#4E342E", "border": "#BCAAA4"},  # Brown
+    {"bg": "#E8F0FE", "text": "#174EA6", "border": "#AECBFA"},
+    {"bg": "#FEF7E0", "text": "#B06000", "border": "#FDD663"},
+    {"bg": "#E6F4EA", "text": "#137333", "border": "#CEEAD6"},
+    {"bg": "#FCE8E6", "text": "#C5221F", "border": "#FAD2CF"},
+    {"bg": "#F3E8FD", "text": "#7627BB", "border": "#D7AEFB"},
+    {"bg": "#E0F2F1", "text": "#00695C", "border": "#80CBC4"},
+    {"bg": "#FFF0F5", "text": "#880E4F", "border": "#F48FB1"},
+    {"bg": "#EFEBE9", "text": "#4E342E", "border": "#BCAAA4"},
 ]
 
 
 def _get_color(label: str) -> dict[str, str]:
-    """Deterministically maps any label string to a consistent palette color."""
     if not label:
         return {"bg": "#F1F3F4", "text": "#3C4043", "border": "#DADCE0"}
     idx = int(hashlib.md5(label.encode("utf-8")).hexdigest(), 16) % len(COLOR_PALETTE)
@@ -91,10 +89,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       border-bottom: 0.5px solid #e2e8f0;
       vertical-align: middle;
     }}
-    .col-term {{ width: 25%; font-weight: 600; color: #111; }}
-    .col-loc  {{ width: 14%; white-space: nowrap; }}
-    .col-cat  {{ width: 18%; }}
-    .col-notes {{ width: 43%; color: #222; }}
+    .col-term {{ width: 24%; font-weight: 600; color: #111; }}
+    .col-loc  {{ width: 15%; white-space: nowrap; }}
+    .col-cat  {{ width: 17%; }}
+    .col-notes {{ width: 44%; color: #222; }}
     
     .badge {{
       display: inline-block;
@@ -105,6 +103,15 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       border: 1px solid transparent;
       text-transform: uppercase;
       letter-spacing: 0.2px;
+    }}
+    .badge-lab {{
+      background-color: #2d3748;
+      color: #edf2f7;
+      font-size: 7pt;
+      padding: 1px 4px;
+      margin-left: 3px;
+      border-radius: 2px;
+      font-weight: bold;
     }}
     .page-num {{
       font-weight: 700;
@@ -126,7 +133,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
 
 def export_to_html(entries: Iterable[IndexEntry]) -> str:
-    """Renders sorted entries into a print-optimized HTML document with color-coded tags."""
     sorted_entries = sorted(entries, key=lambda e: (e.letter_group, e.sort_key))
     sections: list[str] = []
 
@@ -134,8 +140,8 @@ def export_to_html(entries: Iterable[IndexEntry]) -> str:
         rows: list[str] = []
         for e in group:
             term = html.escape(e.term)
+            lab_badge = "<span class='badge-lab'>LAB</span>" if e.is_lab else ""
             
-            # Deterministic color badges for Book and Category
             book_col = _get_color(e.book)
             cat_col = _get_color(e.category)
 
@@ -144,7 +150,7 @@ def export_to_html(entries: Iterable[IndexEntry]) -> str:
                 f"color:{book_col['text']}; border-color:{book_col['border']};'>"
                 f"{html.escape(e.book)}</span>"
             )
-            loc = f"{book_badge} <span class='page-num'>p.{e.page}</span>"
+            loc = f"{book_badge} <span class='page-num'>p.{html.escape(e.page)}</span>{lab_badge}"
 
             cat_badge = (
                 f"<span class='badge' style='background-color:{cat_col['bg']}; "

@@ -7,29 +7,30 @@ from sans_indexer.models import IndexEntry
 
 
 def export_to_markdown(entries: Iterable[IndexEntry]) -> str:
-    """Renders sorted entries into a letter-grouped Markdown table document."""
     sorted_entries = sorted(entries, key=lambda e: (e.letter_group, e.sort_key))
-    sections: list[str] = ["# Course Index\n"]
+    lines: list[str] = ["# SANS / GIAC Open-Book Exam Index\n"]
 
     for letter, group in groupby(sorted_entries, key=lambda e: e.letter_group):
-        sections.append(f"## {letter}\n")
-        sections.append("| Topic / Term | Book | Page | Category | Notes / Aliases |")
-        sections.append("| :--- | :--- | :--- | :--- | :--- |")
+        lines.append(f"## {letter}\n")
+        lines.append("| Topic / Term | Location | Category | Notes & Aliases |")
+        lines.append("| :--- | :--- | :--- | :--- |")
 
         for e in group:
-            term = e.term.replace("|", "\\|")
-            book = e.book.replace("|", "\\|")
-            cat = e.category.replace("|", "\\|")
+            loc = f"`{e.book}` p.{e.page}"
+            if e.is_lab:
+                loc += " **[LAB]**"
 
             notes_parts = []
             if e.notes:
-                notes_parts.append(e.notes.replace("|", "\\|"))
+                notes_parts.append(e.notes)
             if e.synonyms:
-                notes_parts.append(f"Aliases: {', '.join(e.synonyms)}".replace("|", "\\|"))
-            notes_str = " ; ".join(notes_parts)
+                notes_parts.append(f"*Aliases:* {', '.join(e.synonyms)}")
+            notes_text = " • ".join(notes_parts)
 
-            sections.append(f"| {term} | {book} | {e.page} | {cat} | {notes_str} |")
+            clean_term = e.term.replace("|", "\\|")
+            clean_notes = notes_text.replace("|", "\\|")
+            lines.append(f"| **{clean_term}** | {loc} | {e.category} | {clean_notes} |")
 
-        sections.append("")  # Blank line between letter groups
+        lines.append("")
 
-    return "\n".join(sections).strip() + "\n"
+    return "\n".join(lines)

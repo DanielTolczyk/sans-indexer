@@ -7,9 +7,12 @@ A fast, terminal-native indexing utility and search engine tailored for open-boo
 ## Key Features
 
 - **Interactive Study REPL:** Continuous entry mode while reading physical course materials without re-typing command flags.
+- **Hands-On Lab Tagging (`--lab`):** Mark hands-on exercises and tool workflows to render distinct `[LAB]` badges across terminal search and print exports.
+- **Flexible Page Spans:** Supports single pages (`45`), continuous ranges (`45-48`), or disjoint pages (`12, 18`) while preserving natural numeric sort order.
 - **Active Recall Flashcards:** Terminal-native flashcard review mode (`sans-index flashcards`) to test retention by book or category using your own authored notes.
+- **Coverage Statistics Dashboard (`sans-index stats`):** Visual distribution breakdown and coverage health warnings across books and categories.
 - **SQLite FTS5 Full-Text Search:** Sub-millisecond BM25-ranked keyword and token search directly from the terminal.
-- **Color-Coded Print Exporters:** Generates multi-column, print-optimized HTML tables with deterministic pastel badges for books and categories (`Ctrl + P` to PDF).
+- **Color-Coded Print Exporters:** Generates multi-column, print-optimized HTML tables with deterministic pastel badges and alternating zebra striping (`Ctrl + P` to PDF).
 - **Automated Sorting & Grouping:** Natural alphanumeric sorting grouped under alphabet letter headers (`#`, `A`–`Z`).
 - **Deduplicated Merging:** Merge study notes across teammates or past course runs without duplicate `(term, book, page)` rows.
 - **Dynamic Course Profiles:** Switch datasets on the fly via the `SANS_INDEX_FILE` environment variable.
@@ -21,7 +24,7 @@ A fast, terminal-native indexing utility and search engine tailored for open-boo
 ```
 sans-indexer/
 ├── src/sans_indexer/
-│   ├── cli/             # Click CLI, commands, REPL loop, and flashcards review
+│   ├── cli/             # Click CLI, commands, REPL loop, stats, and flashcards
 │   ├── engine/          # In-memory SQLite FTS5 index & BM25 ranker
 │   ├── exporters/       # HTML & Markdown renderers with CSS print formatting
 │   ├── models.py        # Pydantic v2 data models, validation & sort keys
@@ -62,26 +65,37 @@ Type :q or press Ctrl+C to exit.
 Active Book identifier (e.g. B1): B2
 
 Term / Concept: Kerberoasting
-Page number: 55
+Page number or span (e.g. 45 or 45-48): 55-58
 Category [General]: Active Directory
-Notes / Syntax: Request TGS for SPN service accounts
-Aliases / Synonyms (comma-separated): SPN Roasting, TGS Attack
-Saved: [B2 p.55] Kerberoasting
+Notes / Syntax (optional): Request TGS for SPN service accounts; crack offline
+Aliases / Synonyms (comma-separated, optional): SPN Roasting, TGS Attack
+Is this a hands-on Lab exercise? [y/N]: n
+Saved: [B2 p.55-58] Kerberoasting
 ```
 
 ---
 
 ### 2. Single-Entry Add Command
-Add entries directly via CLI flags:
+Add entries directly via CLI flags, including page ranges and hands-on lab flags:
 
 ```bash
+# Add a concept entry
 uv run sans-index add \
   --term "Pass-the-Hash" \
   --book "B3" \
-  --page 88 \
+  --page "88-92" \
   --cat "Lateral Movement" \
   --notes "NTLM authentication without plaintext" \
   --synonyms "PtH"
+
+# Add a hands-on lab exercise
+uv run sans-index add \
+  --term "Mimikatz sekurlsa::logonpasswords" \
+  --book "B3" \
+  --page "42-45" \
+  --cat "Credential Access" \
+  --notes "Dump LSASS plaintexts/hashes" \
+  --lab
 ```
 
 ---
@@ -91,33 +105,21 @@ Query your indexed materials using the built-in FTS5 engine:
 
 ```bash
 uv run sans-index search "kerberos"
+uv run sans-index search "dump lsass"
 ```
 
 ---
 
-### 4. Merging Multiple Datasets
-Combine external notes or a teammate's index without introducing duplicate records:
+### 4. Coverage Statistics Dashboard
+Inspect your indexing progress, category distribution, and book coverage health:
 
 ```bash
-uv run sans-index merge partner_notes.csv
+uv run sans-index stats
 ```
 
 ---
 
-### 5. Print-Ready HTML & Markdown Export
-Export your dataset to print-optimized reference formats:
-
-```bash
-# Export to HTML (with color-coded badges)
-uv run sans-index export --format html --out exam_index.html
-
-# Export to Markdown table
-uv run sans-index export --format md --out exam_index.md
-```
-
----
-
-### 6. Active Recall Flashcards
+### 5. Active Recall Flashcards
 Review indexed terms directly in your terminal using interactive flashcards. Filter by category, book, or limit card count:
 
 ```bash
@@ -129,6 +131,28 @@ uv run sans-index flashcards --cat "Active Directory"
 
 # Review 15 cards from Book 2
 uv run sans-index flashcards -b B2 -l 15
+```
+
+---
+
+### 6. Print-Ready HTML & Markdown Export
+Export your dataset to print-optimized reference formats:
+
+```bash
+# Export to HTML (with color-coded badges and zebra striping)
+uv run sans-index export --format html --out exam_index.html
+
+# Export to Markdown table
+uv run sans-index export --format md --out exam_index.md
+```
+
+---
+
+### 7. Merging Multiple Datasets
+Combine external notes or a teammate's index without introducing duplicate records:
+
+```bash
+uv run sans-index merge partner_notes.csv
 ```
 
 ---
@@ -148,7 +172,7 @@ $env:SANS_INDEX_FILE="data/sec504.csv"
 set SANS_INDEX_FILE=data/sec504.csv
 ```
 
-All subsequent commands (`repl`, `add`, `search`, `export`, `merge`) will automatically use that dataset.
+All subsequent commands (`repl`, `add`, `search`, `stats`, `flashcards`, `export`, `merge`) will automatically use that dataset.
 
 ---
 
@@ -174,8 +198,16 @@ Run the full test suite:
 uv run pytest -v
 ```
 
+---
+
 ## Disclaimer
 
 This project is an independent study utility created for educational purposes. It is not affiliated with, sponsored by, endorsed by, or associated with SANS Institute or GIAC Certifications. SANS is a registered trademark of the SANS Institute, and GIAC is a registered trademark of The Escal Institute of Advanced Technologies, Inc. 
 
 This repository contains only software tooling and does not distribute any proprietary course books, questions, or copyrighted curriculum materials.
+
+---
+
+## License
+
+Distributed under the [MIT License](LICENSE).

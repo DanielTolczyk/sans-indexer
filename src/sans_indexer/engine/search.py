@@ -7,24 +7,26 @@ from sans_indexer.models import IndexEntry, SearchResult
 
 
 class SearchEngine:
-    """In-memory SQLite FTS5 full-text search engine."""
+    """In-memory SQLite FTS5 full-text search engine with BM25 ranking."""
 
-    def __init__(self) -> None:
+    def __init__(self, entries: Iterable[IndexEntry] | None = None) -> None:
         self._conn = sqlite3.connect(":memory:")
-        self._create_schema()
+        self._init_schema()
+        if entries:
+            self.index_entries(entries)
 
-    def _create_schema(self) -> None:
-        """Initializes the FTS5 virtual table."""
+    def _init_schema(self) -> None:
         cursor = self._conn.cursor()
         cursor.execute(
             """
             CREATE VIRTUAL TABLE index_fts USING fts5(
                 term,
-                book UNINDEXED,
+                book,
                 page UNINDEXED,
                 category,
                 notes,
                 synonyms,
+                is_lab UNINDEXED,
                 tokenize='porter unicode61'
             );
             """
@@ -32,23 +34,25 @@ class SearchEngine:
         self._conn.commit()
 
     def index_entries(self, entries: Iterable[IndexEntry]) -> None:
-        """Loads entries into the in-memory FTS5 table."""
+        """Populates the in-memory FTS5 virtual table."""
         cursor = self._conn.cursor()
+        cursor.execute("DELETE FROM index_fts;")
         data = [
             (
                 e.term,
                 e.book,
-                str(e.page),
+                e.page,
                 e.category,
                 e.notes,
                 ", ".join(e.synonyms),
+                "1" if e.is_lab else "0",
             )
             for e in entries
         ]
         cursor.executemany(
             """
-            INSERT INTO index_fts (term, book, page, category, notes, synonyms)
-            VALUES (?, ?, ?, ?, ?, ?);
+            INSERT INTO index_fts (term, book, page, category, notes, synonyms, is_lab)
+            VALUES (?, ?, ?, ?, ?, ?, ?);
             """,
             data,
         )
@@ -60,19 +64,16 @@ class SearchEngine:
         if not clean_query:
             return []
 
-        # Sanitize double quotes and prepare prefix query for tokens
         tokens = [t.replace('"', '""') for t in clean_query.split() if t.strip()]
         if not tokens:
             return []
 
-        # Appends wildcard to the final token for prefix search (e.g., 'kerb*')
         fts_query = " ".join(tokens[:-1] + [f"{tokens[-1]}*"])
 
         cursor = self._conn.cursor()
-        # bm25 weights: term(5.0), category(1.0), notes(2.0), synonyms(4.0)
         cursor.execute(
             """
-            SELECT term, book, page, category, notes, synonyms,
+            SELECT term, book, page, category, notes, synonyms, is_lab,
                    bm25(index_fts, 5.0, 1.0, 2.0, 4.0) AS score
             FROM index_fts
             WHERE index_fts MATCH ?
@@ -84,16 +85,18 @@ class SearchEngine:
 
         results: list[SearchResult] = []
         for row in cursor.fetchall():
-            term, book, page_str, category, notes, synonyms_str, score = row
+            term, book, page_str, category, notes, synonyms_str, is_lab_str, score = row
             synonyms_list = [s.strip() for s in synonyms_str.split(",") if s.strip()]
+            is_lab = is_lab_str == "1"
 
             entry = IndexEntry(
                 term=term,
                 book=book,
-                page=int(page_str),
+                page=page_str,
                 category=category,
                 notes=notes,
                 synonyms=synonyms_list,
+                is_lab=is_lab,
             )
 
             results.append(SearchResult(entry=entry, score=score))
@@ -101,5 +104,12 @@ class SearchEngine:
         return results
 
     def close(self) -> None:
-        """Closes the in-memory SQLite connection."""
-        self._conn.close()
+        """Closes the underlying SQLite in-memory connection."""
+        if self._conn:
+            self._conn.close()
+
+    def __enter__(self) -> SearchEngine:
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        self.close()

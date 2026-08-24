@@ -3,61 +3,30 @@ from sans_indexer.exporters.markdown_exporter import export_to_markdown
 from sans_indexer.models import IndexEntry
 
 
-def test_html_export():
-    entries = [
-        IndexEntry(
-            term="WPA3 SAE",
-            book="B1",
-            page=142,
-            category="Wireless",
-            notes="Dragonfly handshake",
-            synonyms=["SAE"],
-        ),
-        IndexEntry(
-            term="Kerberoasting",
-            book="B2",
-            page=55,
-            category="Active Directory",
-            notes="Extract TGS",
-        ),
-    ]
-
-    html_out = export_to_html(entries)
-
-    # Check for letter groups
-    assert "<div class='letter-header'>K</div>" in html_out
-    assert "<div class='letter-header'>W</div>" in html_out
-
-    # Check terms, badges, and details
-    assert "Kerberoasting" in html_out
-    assert "WPA3 SAE" in html_out
-    assert "Dragonfly handshake" in html_out
-    assert "Aliases: SAE" in html_out
-    assert "class='badge'" in html_out
-
-
 def test_markdown_export():
     entries = [
-        IndexEntry(
-            term="Kerberoasting",
-            book="B2",
-            page=55,
-            category="Active Directory",
-            notes="Extract TGS",
-        ),
-        IndexEntry(
-            term="AS-REP Roasting",
-            book="B2",
-            page=58,
-            category="Active Directory",
-            notes="No preauth required",
-        ),
+        IndexEntry(term="Kerberos", book="B1", page="10-15", category="Auth", notes="Ticket-granting auth"),
+        IndexEntry(term="Pass-the-Hash", book="B2", page="20", category="Lateral Movement", synonyms=["PtH"], is_lab=True),
     ]
+    md = export_to_markdown(entries)
 
-    md_out = export_to_markdown(entries)
+    assert "# SANS / GIAC Open-Book Exam Index" in md
+    assert "## K" in md
+    assert "## P" in md
+    assert "**Kerberos**" in md
+    assert "`B1` p.10-15" in md
+    assert "**[LAB]**" in md
 
-    # Check section headers and ordering
-    assert "## A" in md_out
-    assert "## K" in md_out
-    assert "| AS-REP Roasting | B2 | 58 | Active Directory | No preauth required |" in md_out
-    assert "| Kerberoasting | B2 | 55 | Active Directory | Extract TGS |" in md_out
+
+def test_html_export():
+    entries = [
+        IndexEntry(term="BloodHound", book="B3", page="45", category="Recon", is_lab=True),
+        IndexEntry(term="Responder", book="B1", page="12-14", category="Network Attacks", synonyms=["LLMNR Poisoner"]),
+    ]
+    html_out = export_to_html(entries)
+
+    assert "<!DOCTYPE html>" in html_out
+    assert "BloodHound" in html_out
+    assert "badge-lab" in html_out
+    assert "p.12-14" in html_out
+    assert "Responder" in html_out

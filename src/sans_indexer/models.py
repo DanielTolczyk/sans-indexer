@@ -1,64 +1,61 @@
 from __future__ import annotations
 
 import re
-from typing import Optional
 from pydantic import BaseModel, Field, field_validator
 
 
 class IndexEntry(BaseModel):
-    """Represents a single verified index entry for an open-book exam."""
+    """Represents a single indexed term/concept for SANS/GIAC exam preparation."""
 
-    term: str = Field(..., min_length=1, description="Primary concept, protocol, or command")
-    book: str = Field(..., min_length=1, description="Course book identifier (e.g., 'B1', 'Book 1')")
-    page: int = Field(..., ge=1, description="Page number within the specified book")
-    category: str = Field(default="General", description="Subject taxonomy or domain")
-    notes: str = Field(default="", description="Quick syntax, context, or key takeaways")
-    synonyms: list[str] = Field(default_factory=list, description="Search aliases and alternate names")
+    term: str = Field(..., description="The main concept, tool, or syntax term.")
+    book: str = Field(..., description="Book identifier (e.g., 'B1', 'B2', 'Workbook').")
+    page: str = Field(..., description="Page number or range (e.g., '45', '45-48', '12, 15').")
+    category: str = Field(default="General", description="Subject category (e.g., 'Auth', 'Forensics').")
+    notes: str = Field(default="", description="Key syntax, short description, or context.")
+    synonyms: list[str] = Field(default_factory=list, description="Alternative names or abbreviations.")
+    is_lab: bool = Field(default=False, description="Whether this concept is from a hands-on lab exercise.")
 
-    @field_validator("term", "book", "category", "notes", mode="before")
+    @field_validator("term", "book", "category", mode="before")
     @classmethod
-    def strip_whitespace(cls, v: str) -> str:
+    def strip_strings(cls, v: str) -> str:
         if isinstance(v, str):
             return v.strip()
         return v
 
-    @field_validator("synonyms", mode="before")
+    @field_validator("page", mode="before")
     @classmethod
-    def parse_synonyms(cls, v: str | list[str]) -> list[str]:
-        if isinstance(v, str):
-            if not v.strip():
-                return []
-            return [s.strip() for s in re.split(r"[,;]", v) if s.strip()]
-        return v
+    def normalize_page(cls, v: int | str) -> str:
+        s = str(v).strip()
+        if not s:
+            raise ValueError("Page cannot be empty.")
+        return s
 
     @property
-    def sort_key(self) -> str:
-        """Normalized key for alphabetical collation."""
-        clean = re.sub(r"^[^a-zA-Z0-9]+", "", self.term.lower())
-        return clean or self.term.lower()
+    def start_page_num(self) -> int:
+        """Extracts the leading integer for sorting purposes (e.g., '45-48' -> 45)."""
+        match = re.search(r"\d+", self.page)
+        return int(match.group()) if match else 0
+
+    @property
+    def sort_key(self) -> tuple[str, str, int]:
+        """Natural sort key: normalized term, book name, then starting page number."""
+        return (self.term.lower(), self.book.lower(), self.start_page_num)
 
     @property
     def letter_group(self) -> str:
-        """Returns the primary section header character ('A'-'Z' or '#')."""
-        key = self.sort_key
-        if key and key[0].isalpha():
-            return key[0].upper()
-        return "#"
-
-    def to_csv_row(self) -> dict[str, str]:
-        return {
-            "term": self.term,
-            "book": self.book,
-            "page": str(self.page),
-            "category": self.category,
-            "notes": self.notes,
-            "synonyms": ", ".join(self.synonyms),
-        }
+        """Determines the alphabetical header group ('A'-'Z' or '#')."""
+        if not self.term:
+            return "#"
+        first_char = self.term[0].upper()
+        return first_char if first_char.isalpha() else "#"
 
 
 class SearchResult(BaseModel):
-    """Ranked search result container."""
+    """Wrapper for search results containing the entry and relevance score."""
 
     entry: IndexEntry
-    score: float = 0.0
-    matched_field: Optional[str] = None
+    score: float = Field(..., description="BM25 search relevance score.")
+
+    @property
+    def rank(self) -> float:
+        return self.score
