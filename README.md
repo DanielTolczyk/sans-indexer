@@ -116,6 +116,22 @@ uv run sans-index export --format md --out exam_index.md
 
 ---
 
+### 6. Active Recall Flashcards
+Review indexed terms directly in your terminal using interactive flashcards. Filter by category, book, or limit card count:
+
+```bash
+# Review random flashcards across all books
+uv run sans-index flashcards
+
+# Review only Active Directory terms
+uv run sans-index flashcards --cat "Active Directory"
+
+# Review 15 cards from Book 2
+uv run sans-index flashcards -b B2 -l 15
+```
+
+---
+
 ## Multi-Course Profile Switching
 
 By default, data is saved to `data/index.csv`. To switch targets between different certification courses, set the `SANS_INDEX_FILE` environment variable:
