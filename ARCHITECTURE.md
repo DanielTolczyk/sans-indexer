@@ -11,40 +11,25 @@ A modular, type-safe CLI engine designed for fast study indexing, sub-second SQL
 
 ## 3. Directory Layout
 sans-indexer/
-├── pyproject.toml
-├── ARCHITECTURE.md
-├── README.md
-├── .gitignore
-├── data/                       # Local CSVs (git-ignored)
-├── src/
-│   └── sans_indexer/
-│       ├── init.py
-│       ├── models.py           # Core Pydantic data schemas
-│       ├── storage/            # Local CSV & Remote fetchers
-│       │   ├── base.py
-│       │   ├── csv_store.py
-│       │   └── remote_store.py
-│       ├── engine/             # SQLite FTS5 query & ranking
-│       │   ├── fts.py
-│       │   └── ranker.py
-│       ├── exporters/          # Multi-column HTML & Markdown renderers
-│       │   ├── base.py
-│       │   ├── html.py
-│       │   └── markdown.py
-│       └── cli/                # Click commands & Interactive REPL
-│           ├── main.py
-│           ├── study.py
-│           └── display.py
-└── tests/
-├── conftest.py
-├── test_models.py
-├── test_storage.py
+├── src/sans_indexer/
+│   ├── cli/             # Click CLI commands, REPL loop, and Rich flashcards review
+│   │   ├── flashcards.py
+│   │   ├── main.py
+│   │   └── repl.py
+│   ├── engine/          # In-memory SQLite FTS5 index & BM25 ranker
+│   │   └── search.py
+│   ├── exporters/       # HTML & Markdown renderers with CSS print formatting
+│   │   ├── html_exporter.py
+│   │   └── markdown_exporter.py
+│   ├── models.py        # Pydantic v2 data models, validation & sort keys
+│   └── storage/         # Flat-file CSV persistence & atomic deduplicated merging
+│       └── csv_store.py
+└── tests/               # Pytest suite with CliRunner and tmp_path isolation
+├── test_cli.py
 ├── test_engine.py
-└── test_exporters.py
+├── test_exporters.py
+├── test_flashcards.py
+├── test_models.py
+├── test_repl.py
+└── test_storage.py
 
-## 4. Execution Phases
-- **Phase 1:** Project scaffolding, `pyproject.toml`, and `models.py`.
-- **Phase 2:** Storage engine (`storage/csv_store.py`).
-- **Phase 3:** Search engine (`engine/fts.py`).
-- **Phase 4:** Print-ready HTML & Markdown exporters (`exporters/html.py`).
-- **Phase 5:** Interactive REPL and Click CLI (`cli/`).

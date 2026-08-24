@@ -7,6 +7,7 @@ A fast, terminal-native indexing utility and search engine tailored for open-boo
 ## Key Features
 
 - **Interactive Study REPL:** Continuous entry mode while reading physical course materials without re-typing command flags.
+- **Active Recall Flashcards:** Terminal-native flashcard review mode (`sans-index flashcards`) to test retention by book or category using your own authored notes.
 - **SQLite FTS5 Full-Text Search:** Sub-millisecond BM25-ranked keyword and token search directly from the terminal.
 - **Color-Coded Print Exporters:** Generates multi-column, print-optimized HTML tables with deterministic pastel badges for books and categories (`Ctrl + P` to PDF).
 - **Automated Sorting & Grouping:** Natural alphanumeric sorting grouped under alphabet letter headers (`#`, `A`–`Z`).
@@ -20,7 +21,7 @@ A fast, terminal-native indexing utility and search engine tailored for open-boo
 ```
 sans-indexer/
 ├── src/sans_indexer/
-│   ├── cli/             # Click CLI, commands, and Rich REPL loop
+│   ├── cli/             # Click CLI, commands, REPL loop, and flashcards review
 │   ├── engine/          # In-memory SQLite FTS5 index & BM25 ranker
 │   ├── exporters/       # HTML & Markdown renderers with CSS print formatting
 │   ├── models.py        # Pydantic v2 data models, validation & sort keys
